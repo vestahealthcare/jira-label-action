@@ -39,6 +39,8 @@ const getPrNumber = () => {
 
 const addLabels = async (client, issueType, ticketLabelMappings) => {
   const PRNumber = getPrNumber();
+  console.log(`Available mappings: ${ticketLabelMappings}`);
+  console.log(`Checking for issueType ${issueType}`);
   const label = ticketLabelMappings[issueType]
   console.log(`adding label ${label}to PR`);
 
