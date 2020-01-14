@@ -3176,6 +3176,7 @@ const run = async () => {
     const configPath = core.getInput('configuration-path', { required: true });
     console.log('get mappings');
     const ticketLabelMappings = await getLabelMappings(client, configPath);
+    console.log(ticketLabelMappings);
     console.log('get ticket id');
     const title = github.context.payload.pull_request.title;
     const ticketId = getTicketId(title);
