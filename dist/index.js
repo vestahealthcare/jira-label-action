@@ -3157,7 +3157,7 @@ const run = async () => {
     const gitToken = core.getInput('repo-token', { required: true });
     const client = new github.GitHub(gitToken);
     const configPath = core.getInput('configuration-path', { required: true });
-    // { feature: 'Story', bug: 'Bug', techtask: 'Tech Task' }
+    // { 'Tech Task': 'techtask', 'Story': 'feature', 'Bug': 'bug' }
     const ticketLabelMappings = await getLabelMappings(client, configPath);
     const regexString = core.getInput('ticket-regex', { required: true });
     const regex = new RegExp(regexString);
