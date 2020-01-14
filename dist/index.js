@@ -3099,9 +3099,7 @@ const fetchIssueType = async (url, username, password, ticketId) => {
   return data.fields.issuetype.name;
 };
 
-const getTicketId = (title) => {
-  // matchs [HT-1234] or [ht-1234] and returns HT-1234
-  const regex = /\[((HT|ht)-\d*)]/;
+const getTicketId = (regex, title) => {
   const match = title.match(regex);
   if (!match || !match.length) {
     console.log('Error: No matching ticket found');
@@ -3161,8 +3159,9 @@ const run = async () => {
     const configPath = core.getInput('configuration-path', { required: true });
     // { feature: 'Story', bug: 'Bug', techtask: 'Tech Task' }
     const ticketLabelMappings = await getLabelMappings(client, configPath);
+    const regex = core.getInput('ticket-regex', { required: true });
     const title = github.context.payload.pull_request.title;
-    const ticketId = getTicketId(title);
+    const ticketId = getTicketId(regex, title);
     if (ticketId) {
       const url = core.getInput('jira-url', { required: true });;
       const jiraToken = core.getInput('jira-token', { required: true });
