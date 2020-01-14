@@ -10,7 +10,7 @@ jobs:
         id: jira
         uses: hometeam/jira-label-action@master
         with:
-          repo-token: '${{ secrets.GITHUB_TOKEN }}'
           jira-url: '${{ secrets.JIRA_URL }}'
           jira-username: '${{ secrets.JIRA_USERNAME }}'
           jira-token: '${{ secrets.JIRA_TOKEN }}'
+          repo-token: '${{ secrets.GITHUB_TOKEN }}'

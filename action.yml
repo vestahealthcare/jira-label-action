@@ -1,9 +1,6 @@
 name: 'Jira Label Action'
 description: 'Labels a PR based on JIRA ticket type'
 inputs:
-  repo-token:
-    description: 'github repo token'
-    required: true
   jira-url:
     description: 'jira rest api url'
     required: true
@@ -12,6 +9,9 @@ inputs:
     required: true
   jira-token:
     description: 'jira api token'
+    required: true
+  repo-token:
+    description: 'github repo token'
     required: true
 runs:
   using: 'node12'
