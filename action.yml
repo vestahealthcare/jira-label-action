@@ -13,6 +13,10 @@ inputs:
   jira-token:
     description: 'jira api token'
     required: true
+  configuration-path:
+    description: 'The path for the label configurations'
+    default: '.github/jira-ticket-labeler.yml'
+    required: true
 runs:
   using: 'node12'
   main: 'dist/index.js'

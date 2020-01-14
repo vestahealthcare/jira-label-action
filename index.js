@@ -1,6 +1,7 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 const request = require('request-promise');
+const yaml = require('js-yaml');
 
 const fetchIssueType = async (url, username, password, ticketId) => {
   const options = {
@@ -54,10 +55,8 @@ const getLabels = (issueType) => {
   return [];
 };
 
-const addLabels = async (issueType) => {
+const addLabels = async (client, issueType) => {
   const PRNumber = getPrNumber();
-  const gitToken = core.getInput('repo-token', { required: true });
-  const client = new github.GitHub(gitToken);
   await client.issues.addLabels({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
@@ -66,9 +65,35 @@ const addLabels = async (issueType) => {
   });
 };
 
+const fetchContent = async (client, repoPath) => {
+  const response = await client.repos.getContents({
+    owner: github.context.repo.owner,
+    repo: github.context.repo.repo,
+    path: repoPath,
+    ref: github.context.sha
+  });
+
+  return Buffer.from(response.data.content, 'base64').toString();
+}
+
+const getLabelMappings = async (client, configurationPath) => {
+  const configurationContent = await fetchContent(
+    client,
+    configurationPath
+  );
+
+  const configObject = yaml.safeLoad(configurationContent);
+  return configObject;
+}
+
 const run = async () => {
   try {
+    const gitToken = core.getInput('repo-token', { required: true });
+    const client = new github.GitHub(gitToken);
+
     const title = github.context.payload.pull_request.title;
+    const configPath = core.getInput('configuration-path', { required: true });
+    const ticketLabelMappings = await getLabelMappings(client, configPath);
     const ticketId = getTicketId(title);
     if (ticketId) {
       const url = core.getInput('jira-url', { required: true });;
@@ -82,7 +107,7 @@ const run = async () => {
       );
 
       if (issueType) {
-        addLabels(issueType);
+        addLabels(client, issueType);
       }
     }
   } catch (error) {
