@@ -1,0 +1,16 @@
+on: [pull_request]
+jobs:
+  apply_jira_label:
+    runs-on: ubuntu-latest
+    name: Adds PR label based on JIRA ticket type
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: JIRA Label Action
+        id: jira
+        uses: hometeam/jira-label-action@master
+        with:
+          repo-token: '${{ secrets.GITHUB_TOKEN }}'
+          jira-url: '${{ secrets.JIRA_URL }}'
+          jira-username: '${{ secrets.JIRA_USERNAME }}'
+          jira-token: '${{ secrets.JIRA_TOKEN }}'
