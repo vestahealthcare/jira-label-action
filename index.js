@@ -40,12 +40,19 @@ const getPrNumber = () => {
 const addLabels = async (client, issueType, ticketLabelMappings) => {
   const PRNumber = getPrNumber();
   const label = ticketLabelMappings[issueType]
-  await client.issues.addLabels({
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
-    issue_number: PRNumber,
-    labels: label
-  });
+  console.log(`adding label ${label}to PR`);
+
+  try {
+    await client.issues.addLabels({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      issue_number: PRNumber,
+      labels: label
+    });
+  } catch (error) {
+    // bad label?
+    core.setFailed(error.message);
+  }
 };
 
 const fetchContent = async (client, repoPath) => {
