@@ -38672,13 +38672,16 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
         const regexString = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('ticket-regex', { required: true });
         const regex = new RegExp(regexString);
         const ticketId = getTicketIdFromTitle(title, regex);
-        // 2. Load label mapping from config (do early to detect failur and prevent api calls)
-        const configPath = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('configuration-path', { required: true });
-        const labelMappings = yield getLabelMappings(client, configPath);
-        // 3. Fetch ticket type from JIRA
-        const issueType = yield fetchJIRAIssueType(ticketId);
-        // 4. Apply label according to ticket type
-        addLabel(client, labelMappings[issueType]);
+        // don't explode if no ticketId found
+        if (ticketId) {
+            // 2. Load label mapping from config (do early to detect failur and prevent api calls)
+            const configPath = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('configuration-path', { required: true });
+            const labelMappings = yield getLabelMappings(client, configPath);
+            // 3. Fetch ticket type from JIRA
+            const issueType = yield fetchJIRAIssueType(ticketId);
+            // 4. Apply label according to ticket type
+            addLabel(client, labelMappings[issueType]);
+        }
     }
     catch (error) {
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(error.message);
