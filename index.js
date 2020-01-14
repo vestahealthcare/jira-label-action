@@ -22,6 +22,9 @@ const getTicketId = (title) => {
   // matchs [HT-1234] or [ht-1234] and returns HT-1234
   const regex = /\[((HT|ht)-\d*)]/;
   const match = title.match(regex);
+  if (!match.length) {
+    console.log("Error: No ticket found");
+  }
   return match[1];
 };
 
