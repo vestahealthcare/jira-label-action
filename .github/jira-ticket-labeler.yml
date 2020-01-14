@@ -1,3 +1,3 @@
-feature: 'Story'
-bug: 'Bug'
-techtask: 'Tech Task'
+Story: 'feature'
+Bug: 'bug'
+Tech Task: 'techtask'

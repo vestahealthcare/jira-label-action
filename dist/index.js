@@ -3119,29 +3119,14 @@ const getPrNumber = () => {
   return pullRequest.number;
 }
 
-const getLabels = (issueType) => {
-  if (issueType === 'Story') {
-    return ['feature'];
-  }
-
-  if (issueType === 'Bug') {
-    return ['bugfix'];
-  }
-
-  if (issueType === 'Tech Task') {
-    return ['techtask'];
-  }
-
-  return [];
-};
-
-const addLabels = async (client, issueType) => {
+const addLabels = async (client, issueType, ticketLabelMappings) => {
   const PRNumber = getPrNumber();
+  const label = ticketLabelMappings[issueType]
   await client.issues.addLabels({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
     issue_number: PRNumber,
-    labels: getLabels(issueType)
+    labels: label
   });
 };
 
@@ -3174,10 +3159,8 @@ const run = async () => {
     const gitToken = core.getInput('repo-token', { required: true });
     const client = new github.GitHub(gitToken);
     const configPath = core.getInput('configuration-path', { required: true });
-    console.log('get mappings');
+    // { feature: 'Story', bug: 'Bug', techtask: 'Tech Task' }
     const ticketLabelMappings = await getLabelMappings(client, configPath);
-    console.log(ticketLabelMappings);
-    console.log('get ticket id');
     const title = github.context.payload.pull_request.title;
     const ticketId = getTicketId(title);
     if (ticketId) {
@@ -3192,7 +3175,7 @@ const run = async () => {
       );
 
       if (issueType) {
-        addLabels(client, issueType);
+        addLabels(client, issueType, ticketLabelMappings);
       }
     }
   } catch (error) {
