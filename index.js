@@ -22,6 +22,7 @@ const getTicketId = (title) => {
   // matchs [HT-1234] or [ht-1234] and returns HT-1234
   const regex = /\[((HT|ht)-\d*)]/;
   const match = title.match(regex);
+  console.log(`Match: ${match}`);
   if (!match.length) {
     console.log("Error: No ticket found");
   }
@@ -67,17 +68,23 @@ const addLabels = async (issueType) => {
 
 const run = async () => {
   try {
+    console.log('Begin');
     const title = github.context.payload.pull_request.title;
     const ticketId = getTicketId(title);
+    console.log('grab url');
     const url = core.getInput('jira-url', {required: true});;
+    console.log('grab token');
     const jiraToken = core.getInput('jira-token', {required: true});
+    console.log('grab username');
     const jiraUsername = core.getInput('jira-username', {required: true});
+    console.log('fetch ticket');
     const issueType = await fetchIssueType(
       url,
       jiraUsername,
       jiraToken,
       ticketId
     );
+    console.log('add labels');
     addLabels(issueType);
   } catch (error) {
     core.setFailed(error.message);
