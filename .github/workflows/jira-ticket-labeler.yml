@@ -9,8 +9,3 @@ jobs:
       - name: JIRA Label Action
         id: jira
         uses: hometeam/jira-label-action@master
-        with:
-          jira-url: '${{ secrets.JIRA_URL }}'
-          jira-username: '${{ secrets.JIRA_USERNAME }}'
-          jira-token: '${{ secrets.JIRA_TOKEN }}'
-          repo-token: '${{ secrets.GITHUB_TOKEN }}'
