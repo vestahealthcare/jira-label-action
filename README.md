@@ -17,18 +17,21 @@ This action applys a label to a pull request based on the JIRA ticket type
 
 ## Example usage
 
+```
 on: [pull_request]
 jobs:
   apply_jira_label:
     runs-on: ubuntu-latest
-    name: Adds PR label according to JIRA ticket type
+    name: Adds PR label based on JIRA ticket type
     steps:
       - name: Checkout
         uses: actions/checkout@v1
+      - name: JIRA Label Action
+        id: jira
+        uses: hometeam/jira-label-action@master
         with:
-          ref: rtb/actions # !!!!! change this before final submit
-      - name: Hello world action step
-        uses: ./packages/apply-jira-label
-        with:
-          repo-token: "${{ secrets.GITHUB_TOKEN }}"
-
+          repo-token: '${{ secrets.GITHUB_TOKEN }}'
+          jira-url: '<JIRA REST API>'
+          jira-username: '<JIRA USER NAME>'
+          jira-token: '<JIRA API TOKEN>' # add via secrets
+```
