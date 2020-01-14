@@ -22,7 +22,7 @@ const fetchIssueType = async (url, username, password, ticketId) => {
 const getTicketId = (regex, title) => {
   const match = title.match(regex);
   if (!match || !match.length) {
-    console.log('Error: No matching ticket found');
+    console.log(`Error: No matching ticket found for title: ${title}`);
     return '';
   }
   return match[1];
@@ -79,7 +79,8 @@ const run = async () => {
     const configPath = core.getInput('configuration-path', { required: true });
     // { feature: 'Story', bug: 'Bug', techtask: 'Tech Task' }
     const ticketLabelMappings = await getLabelMappings(client, configPath);
-    const regex = core.getInput('ticket-regex', { required: true });
+    const regexString = core.getInput('ticket-regex', { required: true });
+    const regex = new RegExp(regexString);
     const title = github.context.payload.pull_request.title;
     const ticketId = getTicketId(regex, title);
     if (ticketId) {

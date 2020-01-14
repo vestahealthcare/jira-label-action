@@ -14,4 +14,4 @@ jobs:
           jira-url: '${{ secrets.JIRA_URL }}'
           jira-username: '${{ secrets.JIRA_USERNAME }}'
           jira-token: '${{ secrets.JIRA_TOKEN }}'
-          ticket-regex: '/\[((HT|ht)-\d*)]/'
+          ticket-regex: '\[((HT|ht)-\d*)]'
