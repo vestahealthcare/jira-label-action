@@ -5,6 +5,7 @@
     "@actions/core": "^1.2.1",
     "@actions/github": "^2.0.1",
     "@zeit/ncc": "^0.21.0",
+    "js-yaml": "^3.13.1",
     "request": "^2.88.0",
     "request-promise": "^4.2.5"
   },

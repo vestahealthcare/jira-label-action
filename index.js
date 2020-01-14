@@ -1,6 +1,7 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 const request = require('request-promise');
+const yaml = require('js-yaml');
 
 const fetchIssueType = async (url, username, password, ticketId) => {
   const options = {
@@ -18,12 +19,10 @@ const fetchIssueType = async (url, username, password, ticketId) => {
   return data.fields.issuetype.name;
 };
 
-const getTicketId = (title) => {
-  // matchs [HT-1234] or [ht-1234] and returns HT-1234
-  const regex = /\[((HT|ht)-\d*)]/;
+const getTicketId = (regex, title) => {
   const match = title.match(regex);
-  if (!match.length) {
-    console.log('Error: No matching ticket found');
+  if (!match || !match.length) {
+    console.log(`Error: No matching ticket found for title: ${title}`);
     return '';
   }
   return match[1];
@@ -38,38 +37,52 @@ const getPrNumber = () => {
   return pullRequest.number;
 }
 
-const getLabels = (issueType) => {
-  if (issueType === 'Story') {
-    return ['feature'];
-  }
-
-  if (issueType === 'Bug') {
-    return ['bugfix'];
-  }
-
-  if (issueType === 'Tech Task') {
-    return ['techtask'];
-  }
-
-  return [];
-};
-
-const addLabels = async (issueType) => {
+const addLabels = async (client, issueType, ticketLabelMappings) => {
   const PRNumber = getPrNumber();
-  const gitToken = core.getInput('repo-token', { required: true });
-  const client = new github.GitHub(gitToken);
+  const label = ticketLabelMappings[issueType]
   await client.issues.addLabels({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
     issue_number: PRNumber,
-    labels: getLabels(issueType)
+    labels: label
   });
 };
 
+const fetchContent = async (client, repoPath) => {
+  const response = await client.repos.getContents({
+    owner: github.context.repo.owner,
+    repo: github.context.repo.repo,
+    path: repoPath,
+    ref: github.context.sha
+  });
+
+  console.log('format buffer');
+
+  return Buffer.from(response.data.content, 'base64').toString();
+}
+
+const getLabelMappings = async (client, configurationPath) => {
+  const configurationContent = await fetchContent(
+    client,
+    configurationPath
+  );
+
+  console.log('load yaml');
+  const configObject = yaml.safeLoad(configurationContent);
+  return configObject;
+}
+
 const run = async () => {
   try {
+    const gitToken = core.getInput('repo-token', { required: true });
+    const client = new github.GitHub(gitToken);
+    const configPath = core.getInput('configuration-path', { required: true });
+    // { 'Tech Task': 'techtask', 'Story': 'feature', 'Bug': 'bug' }
+    const ticketLabelMappings = await getLabelMappings(client, configPath);
+    const regexString = core.getInput('ticket-regex', { required: true });
+    const regex = new RegExp(regexString);
     const title = github.context.payload.pull_request.title;
-    const ticketId = getTicketId(title);
+    const ticketId = getTicketId(regex, title);
     if (ticketId) {
       const url = core.getInput('jira-url', { required: true });;
       const jiraToken = core.getInput('jira-token', { required: true });
@@ -82,7 +95,7 @@ const run = async () => {
       );
 
       if (issueType) {
-        addLabels(issueType);
+        addLabels(client, issueType, ticketLabelMappings);
       }
     }
   } catch (error) {
