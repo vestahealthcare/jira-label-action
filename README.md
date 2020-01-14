@@ -13,7 +13,8 @@ This action applys a label to a pull request based on the JIRA ticket type
 
 ### `jira-token`
 
-**Required** jira api token. Can be created here:
+**Required** jira api token. Can be created here: https://confluence.atlassian.com/cloud/api-tokens-938839638.html
+
 This should be placed in your github secrets!
 
 ### `jira-url`
@@ -27,7 +28,9 @@ This should be placed in your github secrets!
 ### 'ticket-regex'
 
 **Required** RegExp for matching ticket ids in your commit message.
+
 For example:  Our commit messages follow the format of `[HT-1234]: Commit message`.
+
 We use the regex `\[((HT|ht)-\d*)]` to extract HT-1234 which is the JIRA ticket id
 
 ## Example usage
@@ -64,3 +67,5 @@ Tech Task: 'techtask'
 
 Should apply the label 'Feature' to any JIRA ticket of the type 'Story'
 
+## Shout out
+to https://github.com/actions/labeler which I used as a guide for creating this.
