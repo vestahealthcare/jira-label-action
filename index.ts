@@ -104,15 +104,18 @@ const run = async () => {
     const regex = new RegExp(regexString);
     const ticketId = getTicketIdFromTitle(title, regex);
 
-    // 2. Load label mapping from config (do early to detect failur and prevent api calls)
-    const configPath = core.getInput('configuration-path', { required: true });
-    const labelMappings = await getLabelMappings(client, configPath);
+    // don't explode if no ticketId found
+    if (ticketId) {
+      // 2. Load label mapping from config (do early to detect failur and prevent api calls)
+      const configPath = core.getInput('configuration-path', { required: true });
+      const labelMappings = await getLabelMappings(client, configPath);
 
-    // 3. Fetch ticket type from JIRA
-    const issueType = await fetchJIRAIssueType(ticketId);
+      // 3. Fetch ticket type from JIRA
+      const issueType = await fetchJIRAIssueType(ticketId);
 
-    // 4. Apply label according to ticket type
-    addLabel(client, labelMappings[issueType]);
+      // 4. Apply label according to ticket type
+      addLabel(client, labelMappings[issueType]);
+    }
   } catch (error) {
     core.setFailed(error.message);
   }
