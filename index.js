@@ -73,6 +73,8 @@ const fetchContent = async (client, repoPath) => {
     ref: github.context.sha
   });
 
+  console.log('format buffer');
+
   return Buffer.from(response.data.content, 'base64').toString();
 }
 
@@ -82,6 +84,7 @@ const getLabelMappings = async (client, configurationPath) => {
     configurationPath
   );
 
+  console.log('load yaml');
   const configObject = yaml.safeLoad(configurationContent);
   return configObject;
 }
@@ -90,10 +93,11 @@ const run = async () => {
   try {
     const gitToken = core.getInput('repo-token', { required: true });
     const client = new github.GitHub(gitToken);
-
-    const title = github.context.payload.pull_request.title;
     const configPath = core.getInput('configuration-path', { required: true });
+    console.log('get mappings');
     const ticketLabelMappings = await getLabelMappings(client, configPath);
+    console.log('get ticket id');
+    const title = github.context.payload.pull_request.title;
     const ticketId = getTicketId(title);
     if (ticketId) {
       const url = core.getInput('jira-url', { required: true });;
