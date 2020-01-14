@@ -22,6 +22,10 @@ const getTicketId = (title) => {
   // matchs [HT-1234] or [ht-1234] and returns HT-1234
   const regex = /\[((HT|ht)-\d*)]/;
   const match = title.match(regex);
+  if (!match.length) {
+    console.log('Error: No matching ticket found');
+    return '';
+  }
   return match[1];
 };
 
@@ -52,7 +56,7 @@ const getLabels = (issueType) => {
 
 const addLabels = async (issueType) => {
   const PRNumber = getPrNumber();
-  const gitToken = core.getInput('repo-token', {required: true});
+  const gitToken = core.getInput('repo-token', { required: true });
   const client = new github.GitHub(gitToken);
   await client.issues.addLabels({
     owner: github.context.repo.owner,
@@ -66,16 +70,21 @@ const run = async () => {
   try {
     const title = github.context.payload.pull_request.title;
     const ticketId = getTicketId(title);
-    const url = core.getInput('jira-url', {required: true});;
-    const jiraToken = core.getInput('jira-token', {required: true});
-    const jiraUsername = core.getInput('jira-username', {required: true});
-    const issueType = await fetchIssueType(
-      url,
-      jiraUsername,
-      jiraToken,
-      ticketId
-    );
-    addLabels(issueType);
+    if (ticketId) {
+      const url = core.getInput('jira-url', { required: true });;
+      const jiraToken = core.getInput('jira-token', { required: true });
+      const jiraUsername = core.getInput('jira-username', { required: true });
+      const issueType = await fetchIssueType(
+        url,
+        jiraUsername,
+        jiraToken,
+        ticketId
+      );
+
+      if (issueType) {
+        addLabels(issueType);
+      }
+    }
   } catch (error) {
     core.setFailed(error.message);
   }
