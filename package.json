@@ -1,0 +1,13 @@
+{
+  "name": "jira-label-action",
+  "version": "1.0.0",
+  "dependencies": {
+    "@actions/core": "^1.2.1",
+    "@actions/github": "^2.0.1",
+    "@zeit/ncc": "^0.21.0",
+    "request-promise": "^4.2.5"
+  },
+  "scripts": {
+    "package": "ncc build --out dist"
+  }
+}
