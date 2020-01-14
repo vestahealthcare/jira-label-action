@@ -47,7 +47,7 @@ const addLabels = async (client, issueType, ticketLabelMappings) => {
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
       issue_number: PRNumber,
-      labels: label
+      labels: [label]
     });
   } catch (error) {
     // bad label?
