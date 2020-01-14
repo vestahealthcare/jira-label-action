@@ -4,6 +4,9 @@ inputs:
   repo-token:
     description: 'github repo token'
     required: true
+  ticket-regex:
+    description: 'regex for matching JIRA ticket id'
+    required: true
   jira-url:
     description: 'jira rest api url'
     required: true
