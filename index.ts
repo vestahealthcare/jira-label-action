@@ -48,8 +48,8 @@ const fetchJIRAIssueType = async (
     method: 'GET',
     url: `${jiraURL}/rest/api/3/issue/${ticketId}`,
     auth: {
-      jiraUsername,
-      jiraToken,
+      username: jiraUsername,
+      password: jiraToken,
     },
     headers: { Accept: 'application/json' },
   };
