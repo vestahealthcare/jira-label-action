@@ -38620,8 +38620,8 @@ const fetchJIRAIssueType = (ticketId, jiraURL, jiraUsername, jiraToken) => __awa
         method: 'GET',
         url: `${jiraURL}/rest/api/3/issue/${ticketId}`,
         auth: {
-            jiraUsername,
-            jiraToken,
+            username: jiraUsername,
+            password: jiraToken,
         },
         headers: { Accept: 'application/json' },
     };
