@@ -38595,9 +38595,13 @@ const getPrNumber = () => {
     }
     return pullRequest.number;
 };
-const addLabel = (client, label) => __awaiter(void 0, void 0, void 0, function* () {
+const addLabel = (client, labelMappings, issueType) => __awaiter(void 0, void 0, void 0, function* () {
+    const label = labelMappings[issueType];
+    if (!label) {
+        console.log(`No label for ticket type: ${issueType}.`);
+    }
     const PRNumber = getPrNumber();
-    console.log(`adding label ${label} to PR #${PRNumber}`);
+    console.log(`Adding label ${label} to PR #${PRNumber}.`);
     try {
         yield client.issues.addLabels({
             owner: _actions_github__WEBPACK_IMPORTED_MODULE_1__.context.repo.owner,
@@ -38611,16 +38615,13 @@ const addLabel = (client, label) => __awaiter(void 0, void 0, void 0, function* 
         throw (error);
     }
 });
-const fetchJIRAIssueType = (ticketId) => __awaiter(void 0, void 0, void 0, function* () {
-    const url = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('jira-url', { required: true });
-    const username = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('jira-username', { required: true });
-    const password = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('jira-token', { required: true });
+const fetchJIRAIssueType = (ticketId, jiraURL, jiraUsername, jiraToken) => __awaiter(void 0, void 0, void 0, function* () {
     const options = {
         method: 'GET',
-        url: `${url}/rest/api/3/issue/${ticketId}`,
+        url: `${jiraURL}/rest/api/3/issue/${ticketId}`,
         auth: {
-            username,
-            password,
+            jiraUsername,
+            jiraToken,
         },
         headers: { Accept: 'application/json' },
     };
@@ -38630,7 +38631,7 @@ const fetchJIRAIssueType = (ticketId) => __awaiter(void 0, void 0, void 0, funct
         return data.fields.issuetype.name;
     }
     catch (error) {
-        console.error(`ERROR: Failed to fetch JIRA Issue with id ${ticketId}`);
+        console.error(`Failed to fetch JIRA Issue with id ${ticketId}`);
         throw (error);
     }
 });
@@ -38650,38 +38651,46 @@ const getLabelMappings = (client, configurationPath) => __awaiter(void 0, void 0
         return configObject;
     }
     catch (error) {
-        console.error('Failed to load config file');
+        console.error('Failed to load config file.');
         throw (error);
     }
 });
-const getTicketIdFromTitle = (title, regex) => {
+const getTicketIdFromTitle = (regexString) => {
+    var _a, _b, _c, _d;
+    const title = (_d = (_c = (_b = (_a = _actions_github__WEBPACK_IMPORTED_MODULE_1__) === null || _a === void 0 ? void 0 : _a.context) === null || _b === void 0 ? void 0 : _b.payload) === null || _c === void 0 ? void 0 : _c.pull_request) === null || _d === void 0 ? void 0 : _d.title;
+    const regex = new RegExp(regexString);
     const match = title.match(regex);
     if (!match || !match.length) {
-        console.log(`Error: No matching ticket found for title: ${title}`);
+        console.log(`No matching ticket found for title: ${title}. Exiting.`);
         return '';
     }
     console.log(`Found potential ticket id: ${match[1]}`);
     return match[1];
 };
+const getInputs = () => ({
+    jiraURL: _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('jira-url', { required: true }),
+    jiraUsername: _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('jira-username', { required: true }),
+    jiraToken: _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('jira-token', { required: true }),
+    gitToken: _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('repo-token', { required: true }),
+    idRegex: _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('ticket-regex', { required: true }),
+    configPath: _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('configuration-path', { required: true }),
+});
 const run = () => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d;
     try {
-        const client = new _actions_github__WEBPACK_IMPORTED_MODULE_1__.GitHub(_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('repo-token', { required: true }));
-        // 1. Get ticket id from PR title
-        const title = (_d = (_c = (_b = (_a = _actions_github__WEBPACK_IMPORTED_MODULE_1__) === null || _a === void 0 ? void 0 : _a.context) === null || _b === void 0 ? void 0 : _b.payload) === null || _c === void 0 ? void 0 : _c.pull_request) === null || _d === void 0 ? void 0 : _d.title;
-        const regexString = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('ticket-regex', { required: true });
-        const regex = new RegExp(regexString);
-        const ticketId = getTicketIdFromTitle(title, regex);
-        // don't explode if no ticketId found
-        if (ticketId) {
-            // 2. Load label mapping from config (do early to detect failur and prevent api calls)
-            const configPath = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('configuration-path', { required: true });
-            const labelMappings = yield getLabelMappings(client, configPath);
-            // 3. Fetch ticket type from JIRA
-            const issueType = yield fetchJIRAIssueType(ticketId);
-            // 4. Apply label according to ticket type
-            addLabel(client, labelMappings[issueType]);
+        // 1. get inputs first to fail early
+        const { jiraURL, jiraUsername, jiraToken, gitToken, idRegex, configPath, } = getInputs();
+        const client = new _actions_github__WEBPACK_IMPORTED_MODULE_1__.GitHub(gitToken);
+        // 2. Get ticket id from PR title
+        const ticketId = getTicketIdFromTitle(idRegex);
+        if (!ticketId) {
+            return;
         }
+        // 3. Load label mapping from config (do early to detect failur and prevent api calls)
+        const labelMappings = yield getLabelMappings(client, configPath);
+        // 4. Fetch ticket type from JIRA
+        const issueType = yield fetchJIRAIssueType(ticketId, jiraURL, jiraUsername, jiraToken);
+        // 5. Apply label according to ticket type
+        addLabel(client, labelMappings, issueType);
     }
     catch (error) {
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(error.message);

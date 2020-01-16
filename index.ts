@@ -14,10 +14,16 @@ const getPrNumber = () => {
 
 const addLabel = async (
   client: any,
-  label: string,
+  labelMappings: { [key: string]: string },
+  issueType: string,
 ) => {
+  const label = labelMappings[issueType];
+  if (!label) {
+    console.log(`No label for ticket type: ${issueType}.`);
+  }
+
   const PRNumber = getPrNumber();
-  console.log(`adding label ${label} to PR #${PRNumber}`);
+  console.log(`Adding label ${label} to PR #${PRNumber}.`);
 
   try {
     await client.issues.addLabels({
@@ -32,17 +38,18 @@ const addLabel = async (
   }
 };
 
-const fetchJIRAIssueType = async (ticketId: string) => {
-  const url = core.getInput('jira-url', { required: true });
-  const username = core.getInput('jira-username', { required: true });
-  const password = core.getInput('jira-token', { required: true });
-
+const fetchJIRAIssueType = async (
+  ticketId: string,
+  jiraURL: string,
+  jiraUsername: string,
+  jiraToken: string,
+) => {
   const options = {
     method: 'GET',
-    url: `${url}/rest/api/3/issue/${ticketId}`,
+    url: `${jiraURL}/rest/api/3/issue/${ticketId}`,
     auth: {
-      username,
-      password,
+      jiraUsername,
+      jiraToken,
     },
     headers: { Accept: 'application/json' },
   };
@@ -52,7 +59,7 @@ const fetchJIRAIssueType = async (ticketId: string) => {
     const data = JSON.parse(result);
     return data.fields.issuetype.name;
   } catch (error) {
-    console.error(`ERROR: Failed to fetch JIRA Issue with id ${ticketId}`);
+    console.error(`Failed to fetch JIRA Issue with id ${ticketId}`);
     throw (error);
   }
 };
@@ -77,45 +84,60 @@ const getLabelMappings = async (
     const configObject = yaml.safeLoad(configurationContent);
     return configObject;
   } catch (error) {
-    console.error('Failed to load config file');
+    console.error('Failed to load config file.');
     throw (error);
   }
 };
 
-const getTicketIdFromTitle = (title: string, regex: RegExp) => {
+const getTicketIdFromTitle = (regexString: string) => {
+  const title: string = github?.context?.payload?.pull_request?.title;
+  const regex = new RegExp(regexString);
   const match = title.match(regex);
   if (!match || !match.length) {
-    console.log(`Error: No matching ticket found for title: ${title}`);
+    console.log(`No matching ticket found for title: ${title}. Exiting.`);
     return '';
   }
   console.log(`Found potential ticket id: ${match[1]}`);
   return match[1];
 };
 
+const getInputs = () => ({
+  jiraURL: core.getInput('jira-url', { required: true }),
+  jiraUsername: core.getInput('jira-username', { required: true }),
+  jiraToken: core.getInput('jira-token', { required: true }),
+  gitToken: core.getInput('repo-token', { required: true }),
+  idRegex: core.getInput('ticket-regex', { required: true }),
+  configPath: core.getInput('configuration-path', { required: true }),
+});
+
 const run = async () => {
   try {
-    const client = new github.GitHub(
-      core.getInput('repo-token', { required: true }),
-    );
+    // 1. get inputs first to fail early
+    const {
+      jiraURL,
+      jiraUsername,
+      jiraToken,
+      gitToken,
+      idRegex,
+      configPath,
+    } = getInputs();
+    const client = new github.GitHub(gitToken);
 
-    // 1. Get ticket id from PR title
-    const title: string = github?.context?.payload?.pull_request?.title;
-    const regexString = core.getInput('ticket-regex', { required: true });
-    const regex = new RegExp(regexString);
-    const ticketId = getTicketIdFromTitle(title, regex);
+    // 2. Get ticket id from PR title
+    const ticketId = getTicketIdFromTitle(idRegex);
 
-    // don't explode if no ticketId found
-    if (ticketId) {
-      // 2. Load label mapping from config (do early to detect failur and prevent api calls)
-      const configPath = core.getInput('configuration-path', { required: true });
-      const labelMappings = await getLabelMappings(client, configPath);
-
-      // 3. Fetch ticket type from JIRA
-      const issueType = await fetchJIRAIssueType(ticketId);
-
-      // 4. Apply label according to ticket type
-      addLabel(client, labelMappings[issueType]);
+    if (!ticketId) {
+      return;
     }
+
+    // 3. Load label mapping from config (do early to detect failur and prevent api calls)
+    const labelMappings = await getLabelMappings(client, configPath);
+
+    // 4. Fetch ticket type from JIRA
+    const issueType = await fetchJIRAIssueType(ticketId, jiraURL, jiraUsername, jiraToken);
+
+    // 5. Apply label according to ticket type
+    addLabel(client, labelMappings, issueType);
   } catch (error) {
     core.setFailed(error.message);
   }
