@@ -46,7 +46,7 @@ const fetchJIRAIssueType = async (
 ) => {
   const options = {
     method: 'GET',
-    url: `${jiraURL}/rest/api/3/issue/ht-${ticketId}`,
+    url: `${jiraURL}/rest/api/3/issue/${ticketId}`,
     auth: {
       username: jiraUsername,
       password: jiraToken,
@@ -134,10 +134,13 @@ const run = async () => {
     const labelMappings = await getLabelMappings(client, configPath);
 
     // 4. Fetch ticket type from JIRA
-    const issueType = await fetchJIRAIssueType(ticketId, jiraURL, jiraUsername, jiraToken);
-
-    // 5. Apply label according to ticket type
-    addLabel(client, labelMappings, issueType);
+    try {
+      const issueType = await fetchJIRAIssueType(ticketId, jiraURL, jiraUsername, jiraToken);
+      // 5. Apply label according to ticket type
+      addLabel(client, labelMappings, issueType);
+    } catch (error) {
+      return;
+    }
   } catch (error) {
     core.setFailed(error.message);
   }
