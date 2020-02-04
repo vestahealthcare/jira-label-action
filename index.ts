@@ -46,7 +46,7 @@ const fetchJIRAIssueType = async (
 ) => {
   const options = {
     method: 'GET',
-    url: `${jiraURL}/rest/api/3/issue/${ticketId}`,
+    url: `${jiraURL}/rest/api/3/issue/ht-${ticketId}`,
     auth: {
       username: jiraUsername,
       password: jiraToken,
