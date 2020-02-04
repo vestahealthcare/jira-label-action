@@ -38688,9 +38688,14 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
         // 3. Load label mapping from config (do early to detect failur and prevent api calls)
         const labelMappings = yield getLabelMappings(client, configPath);
         // 4. Fetch ticket type from JIRA
-        const issueType = yield fetchJIRAIssueType(ticketId, jiraURL, jiraUsername, jiraToken);
-        // 5. Apply label according to ticket type
-        addLabel(client, labelMappings, issueType);
+        try {
+            const issueType = yield fetchJIRAIssueType(ticketId, jiraURL, jiraUsername, jiraToken);
+            // 5. Apply label according to ticket type
+            addLabel(client, labelMappings, issueType);
+        }
+        catch (error) {
+            return;
+        }
     }
     catch (error) {
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(error.message);
