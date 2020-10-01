@@ -2,7 +2,7 @@
   "name": "jira-label-action",
   "version": "1.0.0",
   "dependencies": {
-    "@actions/core": "^1.2.4",
+    "@actions/core": "^1.2.6",
     "@actions/github": "^4.0.0",
     "@zeit/ncc": "^0.21.0",
     "js-yaml": "^3.13.1",
